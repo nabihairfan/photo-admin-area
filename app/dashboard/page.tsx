@@ -54,9 +54,24 @@ export default function Dashboard() {
     { name: "Captions", count: stats?.captions, fill: "#f59e0b" },
   ]
 
+  const voteBarData = [
+    { name: "Total Votes", count: stats?.votes, fill: "#a78bfa" },
+    { name: "Upvotes 👍", count: stats?.upvotes, fill: "#34d399" },
+    { name: "Downvotes 👎", count: stats?.downvotes, fill: "#f87171" },
+  ]
+
+  const votePieData = [
+    { name: "Upvotes", value: stats?.upvotes },
+    { name: "Downvotes", value: stats?.downvotes },
+  ]
+
+  const VOTE_COLORS = ["#34d399", "#f87171"]
+
   const captionsPerImage = stats?.images ? (stats?.captions / stats?.images).toFixed(1) : 0
   const captionsPerUser = stats?.users ? (stats?.captions / stats?.users).toFixed(1) : 0
   const imagesPerUser = stats?.users ? (stats?.images / stats?.users).toFixed(1) : 0
+  const upvoteRate = stats?.votes ? ((stats?.upvotes / stats?.votes) * 100).toFixed(1) : 0
+  const votesPerCaption = stats?.captions ? (stats?.votes / stats?.captions).toFixed(2) : 0
 
   const navItems = [
     { href: "/users", label: "Users", emoji: "👤", color: "bg-indigo-600 hover:bg-indigo-700" },
@@ -114,12 +129,28 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Ratio cards */}
+      {/* Voting stat cards */}
       <div className="grid grid-cols-3 gap-6 mb-8">
         {[
-          { label: "Captions per Image", value: captionsPerImage, icon: "📸", desc: "avg captions generated per image" },
+          { label: "Total Votes Cast", value: stats?.votes?.toLocaleString(), icon: "🗳️", color: "from-violet-600 to-violet-900", border: "border-violet-500" },
+          { label: "Total Upvotes", value: stats?.upvotes?.toLocaleString(), icon: "👍", color: "from-green-600 to-green-900", border: "border-green-500" },
+          { label: "Total Downvotes", value: stats?.downvotes?.toLocaleString(), icon: "👎", color: "from-red-600 to-red-900", border: "border-red-500" },
+        ].map((s) => (
+          <div key={s.label} className={`bg-gradient-to-br ${s.color} border ${s.border} rounded-2xl p-6 shadow-xl`}>
+            <div className="text-4xl mb-3">{s.icon}</div>
+            <p className="text-gray-300 text-sm uppercase tracking-widest mb-1">{s.label}</p>
+            <p className="text-5xl font-black">{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Ratio cards */}
+      <div className="grid grid-cols-4 gap-6 mb-8">
+        {[
+          { label: "Captions per Image", value: captionsPerImage, icon: "📸", desc: "avg captions per image" },
           { label: "Captions per User", value: captionsPerUser, icon: "✍️", desc: "avg captions per user" },
           { label: "Images per User", value: imagesPerUser, icon: "🗂️", desc: "avg images per user" },
+          { label: "Votes per Caption", value: votesPerCaption, icon: "🗳️", desc: "avg votes per caption" },
         ].map((s) => (
           <div key={s.label} className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-xl">
             <div className="text-3xl mb-2">{s.icon}</div>
@@ -130,7 +161,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Charts row */}
+      {/* Charts row 1 — existing */}
       <div className="grid grid-cols-2 gap-6 mb-8">
         <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-xl">
           <h2 className="text-lg font-bold mb-6 text-gray-200">📊 Database Breakdown</h2>
@@ -164,14 +195,72 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Charts row 2 — voting */}
+      <div className="grid grid-cols-2 gap-6 mb-8">
+        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-xl">
+          <h2 className="text-lg font-bold mb-2 text-gray-200">🗳️ Votes Breakdown</h2>
+          <p className="text-gray-500 text-xs mb-6">Total votes cast by users on captions</p>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={voteBarData}>
+              <XAxis dataKey="name" stroke="#9ca3af" />
+              <YAxis stroke="#9ca3af" />
+              <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "none", borderRadius: "8px" }} labelStyle={{ color: "#f9fafb" }} />
+              <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                {voteBarData.map((entry, index) => (
+                  <Cell key={index} fill={entry.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-xl">
+          <h2 className="text-lg font-bold mb-2 text-gray-200">👍 Upvote vs Downvote</h2>
+          <p className="text-gray-500 text-xs mb-2">Overall positivity rate</p>
+          <p className="text-3xl font-black text-green-400 mb-4">{upvoteRate}% positive</p>
+          <ResponsiveContainer width="100%" height={200}>
+            <PieChart>
+              <Pie data={votePieData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={5} dataKey="value"
+                label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`} labelLine={false}>
+                {votePieData.map((_, index) => (
+                  <Cell key={index} fill={VOTE_COLORS[index]} />
+                ))}
+              </Pie>
+              <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "none", borderRadius: "8px" }} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Top rated captions */}
+      <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-xl mb-8">
+        <h2 className="text-lg font-bold mb-4 text-gray-200">🏆 Top 5 Rated Captions</h2>
+        <div className="grid grid-cols-1 gap-3">
+          {stats?.topCaptions?.map((caption: any, i: number) => (
+            <div key={caption.id} className="flex items-center gap-4 bg-gray-800 rounded-xl p-4">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-lg flex-shrink-0 ${
+                i === 0 ? "bg-yellow-400 text-gray-900" :
+                i === 1 ? "bg-gray-400 text-gray-900" :
+                i === 2 ? "bg-orange-400 text-gray-900" :
+                "bg-gray-700 text-gray-300"
+              }`}>
+                {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+              </div>
+              <p className="text-gray-200 text-sm flex-1">{caption.content}</p>
+              <span className="text-green-400 font-bold text-sm flex-shrink-0">❤️ {caption.like_count}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Fun facts */}
       <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-xl">
         <h2 className="text-lg font-bold mb-4 text-gray-200">🤯 Fun Facts</h2>
         <div className="grid grid-cols-4 gap-4">
           {[
-            { fact: `Each image gets an average of ${captionsPerImage} captions generated`, emoji: "⚖️" },
-            { fact: `${stats?.images?.toLocaleString()} images have been uploaded to Crackd`, emoji: "🚀" },
-            { fact: `Over ${stats?.captions?.toLocaleString()} captions generated — that's a lot of humor!`, emoji: "😂" },
+            { fact: `${upvoteRate}% of all votes are upvotes — users mostly love the captions!`, emoji: "💚" },
+            { fact: `${stats?.votes?.toLocaleString()} total votes cast across all captions`, emoji: "🗳️" },
+            { fact: `Each caption gets an average of ${votesPerCaption} votes`, emoji: "📊" },
             { fact: `${stats?.users?.toLocaleString()} users have joined the Crackd community`, emoji: "🌍" },
           ].map((f, i) => (
             <div key={i} className="bg-gray-800 rounded-xl p-4">
