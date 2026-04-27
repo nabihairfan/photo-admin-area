@@ -4,11 +4,13 @@ import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
+import { useTheme } from "@/lib/ThemeContext"
 
 export default function Dashboard() {
   const router = useRouter()
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const { isDark, toggleTheme } = useTheme()
 
   useEffect(() => { checkUserAndFetchStats() }, [])
 
@@ -90,19 +92,29 @@ export default function Dashboard() {
     { href: "/whitelist-emails", label: "Whitelist Emails", emoji: "📧", color: "bg-sky-600 hover:bg-sky-700" },
   ]
 
+  const cardBg = isDark ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"
+  const pageBg = isDark ? "bg-gray-950 text-white" : "bg-gray-100 text-gray-900"
+  const subtext = isDark ? "text-gray-400" : "text-gray-500"
+  const innerCard = isDark ? "bg-gray-800" : "bg-gray-100"
+
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-8">
+    <main className={`min-h-screen ${pageBg} p-8`}>
       {/* Header */}
       <div className="flex justify-between items-center mb-10">
         <div>
           <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-indigo-400 via-cyan-400 to-amber-400 bg-clip-text text-transparent">
             ⚡ Crackd Admin
           </h1>
-          <p className="text-gray-400 mt-1">Real-time database overview</p>
+          <p className={`${subtext} mt-1`}>Real-time database overview</p>
         </div>
-        <button onClick={signOut} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-semibold transition">
-          Sign Out
-        </button>
+        <div className="flex gap-3">
+          <button onClick={toggleTheme} className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
+            {isDark ? "☀️ Light" : "🌙 Dark"}
+          </button>
+          <button onClick={signOut} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
+            Sign Out
+          </button>
+        </div>
       </div>
 
       {/* Nav Grid */}
@@ -124,7 +136,7 @@ export default function Dashboard() {
           <div key={s.label} className={`bg-gradient-to-br ${s.color} border ${s.border} rounded-2xl p-6 shadow-xl`}>
             <div className="text-4xl mb-3">{s.icon}</div>
             <p className="text-gray-300 text-sm uppercase tracking-widest mb-1">{s.label}</p>
-            <p className="text-5xl font-black">{s.value}</p>
+            <p className="text-5xl font-black text-white">{s.value}</p>
           </div>
         ))}
       </div>
@@ -139,7 +151,7 @@ export default function Dashboard() {
           <div key={s.label} className={`bg-gradient-to-br ${s.color} border ${s.border} rounded-2xl p-6 shadow-xl`}>
             <div className="text-4xl mb-3">{s.icon}</div>
             <p className="text-gray-300 text-sm uppercase tracking-widest mb-1">{s.label}</p>
-            <p className="text-5xl font-black">{s.value}</p>
+            <p className="text-5xl font-black text-white">{s.value}</p>
           </div>
         ))}
       </div>
@@ -152,44 +164,39 @@ export default function Dashboard() {
           { label: "Images per User", value: imagesPerUser, icon: "🗂️", desc: "avg images per user" },
           { label: "Votes per Caption", value: votesPerCaption, icon: "🗳️", desc: "avg votes per caption" },
         ].map((s) => (
-          <div key={s.label} className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-xl">
+          <div key={s.label} className={`border rounded-2xl p-6 shadow-xl ${cardBg}`}>
             <div className="text-3xl mb-2">{s.icon}</div>
-            <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">{s.label}</p>
-            <p className="text-4xl font-black text-white">{s.value}</p>
-            <p className="text-gray-500 text-xs mt-2">{s.desc}</p>
+            <p className={`text-xs uppercase tracking-widest mb-1 ${subtext}`}>{s.label}</p>
+            <p className={`text-4xl font-black ${isDark ? "text-white" : "text-gray-900"}`}>{s.value}</p>
+            <p className={`text-xs mt-2 ${subtext}`}>{s.desc}</p>
           </div>
         ))}
       </div>
 
-      {/* Charts row 1 — existing */}
+      {/* Charts row 1 */}
       <div className="grid grid-cols-2 gap-6 mb-8">
-        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-xl">
-          <h2 className="text-lg font-bold mb-6 text-gray-200">📊 Database Breakdown</h2>
+        <div className={`border rounded-2xl p-6 shadow-xl ${cardBg}`}>
+          <h2 className={`text-lg font-bold mb-6 ${isDark ? "text-gray-200" : "text-gray-700"}`}>📊 Database Breakdown</h2>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={barData}>
               <XAxis dataKey="name" stroke="#9ca3af" />
               <YAxis stroke="#9ca3af" />
-              <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "none", borderRadius: "8px" }} labelStyle={{ color: "#f9fafb" }} />
+              <Tooltip contentStyle={{ backgroundColor: isDark ? "#1f2937" : "#ffffff", border: "none", borderRadius: "8px" }} labelStyle={{ color: isDark ? "#f9fafb" : "#111827" }} />
               <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                {barData.map((entry, index) => (
-                  <Cell key={index} fill={entry.fill} />
-                ))}
+                {barData.map((entry, index) => (<Cell key={index} fill={entry.fill} />))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
-
-        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-xl">
-          <h2 className="text-lg font-bold mb-6 text-gray-200">🥧 Data Distribution</h2>
+        <div className={`border rounded-2xl p-6 shadow-xl ${cardBg}`}>
+          <h2 className={`text-lg font-bold mb-6 ${isDark ? "text-gray-200" : "text-gray-700"}`}>🥧 Data Distribution</h2>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value"
                 label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`} labelLine={false}>
-                {pieData.map((_, index) => (
-                  <Cell key={index} fill={COLORS[index]} />
-                ))}
+                {pieData.map((_, index) => (<Cell key={index} fill={COLORS[index]} />))}
               </Pie>
-              <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "none", borderRadius: "8px" }} />
+              <Tooltip contentStyle={{ backgroundColor: isDark ? "#1f2937" : "#ffffff", border: "none", borderRadius: "8px" }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -197,47 +204,42 @@ export default function Dashboard() {
 
       {/* Charts row 2 — voting */}
       <div className="grid grid-cols-2 gap-6 mb-8">
-        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-xl">
-          <h2 className="text-lg font-bold mb-2 text-gray-200">🗳️ Votes Breakdown</h2>
-          <p className="text-gray-500 text-xs mb-6">Total votes cast by users on captions</p>
+        <div className={`border rounded-2xl p-6 shadow-xl ${cardBg}`}>
+          <h2 className={`text-lg font-bold mb-2 ${isDark ? "text-gray-200" : "text-gray-700"}`}>🗳️ Votes Breakdown</h2>
+          <p className={`text-xs mb-6 ${subtext}`}>Total votes cast by users on captions</p>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={voteBarData}>
               <XAxis dataKey="name" stroke="#9ca3af" />
               <YAxis stroke="#9ca3af" />
-              <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "none", borderRadius: "8px" }} labelStyle={{ color: "#f9fafb" }} />
+              <Tooltip contentStyle={{ backgroundColor: isDark ? "#1f2937" : "#ffffff", border: "none", borderRadius: "8px" }} labelStyle={{ color: isDark ? "#f9fafb" : "#111827" }} />
               <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                {voteBarData.map((entry, index) => (
-                  <Cell key={index} fill={entry.fill} />
-                ))}
+                {voteBarData.map((entry, index) => (<Cell key={index} fill={entry.fill} />))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
-
-        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-xl">
-          <h2 className="text-lg font-bold mb-2 text-gray-200">👍 Upvote vs Downvote</h2>
-          <p className="text-gray-500 text-xs mb-2">Overall positivity rate</p>
+        <div className={`border rounded-2xl p-6 shadow-xl ${cardBg}`}>
+          <h2 className={`text-lg font-bold mb-2 ${isDark ? "text-gray-200" : "text-gray-700"}`}>👍 Upvote vs Downvote</h2>
+          <p className={`text-xs mb-2 ${subtext}`}>Overall positivity rate</p>
           <p className="text-3xl font-black text-green-400 mb-4">{upvoteRate}% positive</p>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie data={votePieData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={5} dataKey="value"
                 label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`} labelLine={false}>
-                {votePieData.map((_, index) => (
-                  <Cell key={index} fill={VOTE_COLORS[index]} />
-                ))}
+                {votePieData.map((_, index) => (<Cell key={index} fill={VOTE_COLORS[index]} />))}
               </Pie>
-              <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "none", borderRadius: "8px" }} />
+              <Tooltip contentStyle={{ backgroundColor: isDark ? "#1f2937" : "#ffffff", border: "none", borderRadius: "8px" }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Top rated captions */}
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-xl mb-8">
-        <h2 className="text-lg font-bold mb-4 text-gray-200">🏆 Top 5 Rated Captions</h2>
+      <div className={`border rounded-2xl p-6 shadow-xl mb-8 ${cardBg}`}>
+        <h2 className={`text-lg font-bold mb-4 ${isDark ? "text-gray-200" : "text-gray-700"}`}>🏆 Top 5 Rated Captions</h2>
         <div className="grid grid-cols-1 gap-3">
           {stats?.topCaptions?.map((caption: any, i: number) => (
-            <div key={caption.id} className="flex items-center gap-4 bg-gray-800 rounded-xl p-4">
+            <div key={caption.id} className={`flex items-center gap-4 rounded-xl p-4 ${innerCard}`}>
               <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-lg flex-shrink-0 ${
                 i === 0 ? "bg-yellow-400 text-gray-900" :
                 i === 1 ? "bg-gray-400 text-gray-900" :
@@ -246,7 +248,7 @@ export default function Dashboard() {
               }`}>
                 {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
               </div>
-              <p className="text-gray-200 text-sm flex-1">{caption.content}</p>
+              <p className={`text-sm flex-1 ${isDark ? "text-gray-200" : "text-gray-700"}`}>{caption.content}</p>
               <span className="text-green-400 font-bold text-sm flex-shrink-0">❤️ {caption.like_count}</span>
             </div>
           ))}
@@ -254,8 +256,8 @@ export default function Dashboard() {
       </div>
 
       {/* Fun facts */}
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-xl">
-        <h2 className="text-lg font-bold mb-4 text-gray-200">🤯 Fun Facts</h2>
+      <div className={`border rounded-2xl p-6 shadow-xl ${cardBg}`}>
+        <h2 className={`text-lg font-bold mb-4 ${isDark ? "text-gray-200" : "text-gray-700"}`}>🤯 Fun Facts</h2>
         <div className="grid grid-cols-4 gap-4">
           {[
             { fact: `${upvoteRate}% of all votes are upvotes — users mostly love the captions!`, emoji: "💚" },
@@ -263,15 +265,15 @@ export default function Dashboard() {
             { fact: `Each caption gets an average of ${votesPerCaption} votes`, emoji: "📊" },
             { fact: `${stats?.users?.toLocaleString()} users have joined the Crackd community`, emoji: "🌍" },
           ].map((f, i) => (
-            <div key={i} className="bg-gray-800 rounded-xl p-4">
+            <div key={i} className={`rounded-xl p-4 ${innerCard}`}>
               <div className="text-3xl mb-2">{f.emoji}</div>
-              <p className="text-gray-300 text-sm">{f.fact}</p>
+              <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>{f.fact}</p>
             </div>
           ))}
         </div>
       </div>
 
-      <p className="text-center text-gray-600 text-xs mt-8">Crackd Admin Area • Superadmins only 🔒</p>
+      <p className={`text-center text-xs mt-8 ${subtext}`}>Crackd Admin Area • Superadmins only 🔒</p>
     </main>
   )
 }

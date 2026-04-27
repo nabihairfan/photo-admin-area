@@ -1,13 +1,14 @@
 import "./globals.css"
-
-export const metadata = {
-  title: "Admin Area",
-}
+import { ThemeProvider } from "@/lib/ThemeContext"
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   )
 }
